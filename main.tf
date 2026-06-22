@@ -10,19 +10,19 @@ terraform {
   backend "s3" {
     bucket         = "redya-terraform-state-backend"
     key            = "global/s3/terraform.tfstate"
-    region         = "us-east-1"
+    region         = "us-east-1" # Backend configurations must use literal strings
     encrypt        = true
-    dynamodb_table = "redya-terraform-state-locks" # Enables distributed state locking!
+    dynamodb_table = "redya-terraform-state-locks" 
   }
 }
 
-# Configures the target AWS cloud deployment region
+# Configures the target AWS cloud deployment region dynamically
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 # The actual infrastructure resource Jenkins will deploy and destroy
 resource "aws_s3_bucket" "my_automation_bucket" {
-  bucket_prefix = "jenkins-terraform-automation-"
+  bucket_prefix = var.bucket_prefix
   force_destroy = true
 }
