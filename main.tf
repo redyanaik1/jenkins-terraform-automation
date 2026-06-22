@@ -6,12 +6,13 @@ terraform {
     }
   }
 
-  # Stores the state file securely in your central S3 bucket
+  # Stores the state file securely in S3 and locks it via DynamoDB
   backend "s3" {
-    bucket  = "redya-terraform-state-backend"
-    key     = "global/s3/terraform.tfstate"
-    region  = "us-east-1"
-    encrypt = true
+    bucket         = "redya-terraform-state-backend"
+    key            = "global/s3/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "redya-terraform-state-locks" # Enables distributed state locking!
   }
 }
 
