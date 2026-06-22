@@ -1,0 +1,18 @@
+pipeline {
+    agent any
+    environment {
+        AWS_DEFAULT_REGION = 'us-east-1' 
+    }
+    stages {
+        stage('Initialize Terraform') {
+            steps {
+                sh 'terraform init'
+            }
+        }
+        stage('Tear Down Cloud Resources') {
+            steps {
+                sh 'terraform destroy -auto-approve'
+            }
+        }
+    }
+}
