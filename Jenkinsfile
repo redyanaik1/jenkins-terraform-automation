@@ -8,8 +8,8 @@ pipeline {
 
     environment {
         AWS_DEFAULT_REGION = "${params.AWS_REGION}"
-        // Captures branch name (e.g., 'main' or 'feature-branch')
-        ENV_NAME = "${env.BRANCH_NAME ?: 'dev'}" 
+        // Replace '/' with '-' to ensure the workspace name is URL-safe for Terraform
+        ENV_NAME = "${env.BRANCH_NAME.replace('/', '-')}" 
     }
 
     stages {
@@ -30,11 +30,9 @@ pipeline {
                     terraform workspace select ${ENV_NAME} || terraform workspace new ${ENV_NAME}
                     
                     # 1. Generate a Plan file
-                    # We pass the bucket_prefix and region as variables
                     terraform plan -out=tfplan -var='bucket_prefix=${params.BUCKET_PREFIX}${ENV_NAME}-' -var='aws_region=${params.AWS_REGION}'
                     
                     # 2. Automated Security Export
-                    # Converts the plan into JSON for potential integration with security scanners
                     terraform show -json tfplan > tfplan.json
                 """
             }
