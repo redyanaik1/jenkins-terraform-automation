@@ -118,6 +118,16 @@ resource "aws_instance" "automation_web_server" {
   subnet_id              = aws_subnet.public_subnet.id
   vpc_security_group_ids = [aws_security_group.web_sg.id]
 
+  # Automatically bootstrap and configure the Apache Web Server
+  user_data = <<-EOF
+              #!/bin/bash
+              dnf update -y
+              dnf install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              echo "<h1>Welcome to Redya's Automated Cloud Infrastructure! Built via Jenkins.</h1>" > /var/www/html/index.html
+              EOF
+
   tags = {
     Name = "redya-automation-server"
   }
