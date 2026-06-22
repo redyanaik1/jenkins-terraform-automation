@@ -8,8 +8,8 @@ pipeline {
 
     environment {
         AWS_DEFAULT_REGION = "${params.AWS_REGION}"
-        // Replace '/' with '-' to ensure the workspace name is URL-safe for Terraform
-        ENV_NAME = "${env.BRANCH_NAME.replace('/', '-')}" 
+        // Replace '/' with '-' and truncate to 10 chars to ensure S3 bucket name < 37 chars
+        ENV_NAME = "${env.BRANCH_NAME.replace('/', '-').take(10)}" 
     }
 
     stages {
@@ -30,6 +30,7 @@ pipeline {
                     terraform workspace select ${ENV_NAME} || terraform workspace new ${ENV_NAME}
                     
                     # 1. Generate a Plan file
+                    # Now uses the truncated ENV_NAME for the bucket_prefix
                     terraform plan -out=tfplan -var='bucket_prefix=${params.BUCKET_PREFIX}${ENV_NAME}-' -var='aws_region=${params.AWS_REGION}'
                     
                     # 2. Automated Security Export
@@ -55,7 +56,7 @@ pipeline {
     
     post {
         always {
-            // Clean up the plan files after the job finishes to save space
+            // Clean up the plan files after the job finishes
             sh 'rm -f tfplan tfplan.json'
         }
     }
