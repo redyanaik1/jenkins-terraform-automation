@@ -1,23 +1,32 @@
 pipeline {
     agent any
-    environment {
-        AWS_DEFAULT_REGION = 'us-east-1' 
+    
+    parameters {
+        string(name: 'BUCKET_PREFIX', defaultValue: 'redya-prod-automation-', description: 'Custom prefix for the S3 bucket')
+        choice(name: 'AWS_REGION', choices: ['us-east-1', 'us-west-2'], description: 'Target AWS Region')
     }
+
+    environment {
+        AWS_DEFAULT_REGION = "${params.AWS_REGION}"
+    }
+
     stages {
-        stage('Initialize & Validate') {
+        stage('Checkout Code') {
             steps {
-                // The flags tell Terraform to run completely unattended
+                checkout scm
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
                 sh 'terraform init -input=false -reconfigure -force-copy'
             }
         }
-        stage('Build Blueprint Plan') {
-            steps {
-                sh 'terraform plan -out=awsplan'
-            }
-        }
+
         stage('Deploy Infrastructure') {
             steps {
-                sh 'terraform apply -auto-approve awsplan'
+                // We pass the Jenkins UI parameters directly into Terraform here!
+                sh "terraform apply -auto-approve -var='bucket_prefix=${params.BUCKET_PREFIX}' -var='aws_region=${params.AWS_REGION}'"
             }
         }
     }
