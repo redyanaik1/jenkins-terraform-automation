@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage('Initialize Terraform') {
             steps {
-                sh 'terraform init'
+                sh 'terraform init -input=false -reconfigure'
             }
         }
         stage('Tear Down Cloud Resources') {

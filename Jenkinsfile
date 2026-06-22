@@ -6,7 +6,8 @@ pipeline {
     stages {
         stage('Initialize & Validate') {
             steps {
-                sh 'terraform init'
+                // The flags tell Terraform to run completely unattended
+                sh 'terraform init -input=false -reconfigure'
             }
         }
         stage('Build Blueprint Plan') {
