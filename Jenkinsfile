@@ -19,9 +19,10 @@ pipeline {
 
         stage('Deploy Infrastructure') {
             steps {
-                // Chaining init and apply inside a single shell block guarantees the backend initialization carries through
+                // Cleaning local workspace cache files guarantees backend sync
                 sh """
-                    terraform init -input=false -reconfigure
+                    rm -rf .terraform*
+                    terraform init -input=false
                     terraform apply -auto-approve -var='bucket_prefix=${params.BUCKET_PREFIX}' -var='aws_region=${params.AWS_REGION}'
                 """
             }
