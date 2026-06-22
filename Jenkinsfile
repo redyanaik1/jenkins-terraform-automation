@@ -29,11 +29,10 @@ pipeline {
                     terraform init -input=false
                     terraform workspace select ${ENV_NAME} || terraform workspace new ${ENV_NAME}
                     
-                    # 1. Generate a Plan file
-                    # Now uses the truncated ENV_NAME for the bucket_prefix
+                    # Generate a Plan file
                     terraform plan -out=tfplan -var='bucket_prefix=${params.BUCKET_PREFIX}${ENV_NAME}-' -var='aws_region=${params.AWS_REGION}'
                     
-                    # 2. Automated Security Export
+                    # Automated Security Export
                     terraform show -json tfplan > tfplan.json
                 """
             }
@@ -41,22 +40,26 @@ pipeline {
         
         stage('Manual Approval') {
             steps {
-                // Jenkins will pause here and wait for you to click "Proceed" in the UI
                 input message: 'Do you want to apply this Terraform Plan?', ok: 'Apply Now'
             }
         }
 
         stage('Apply') {
             steps {
-                // Apply the exact plan generated in the previous stage
                 sh 'terraform apply -auto-approve tfplan'
+            }
+        }
+
+        stage('Destroy Infrastructure') {
+            steps {
+                input message: 'Are you sure you want to DESTROY all infrastructure?', ok: 'Destroy Now'
+                sh 'terraform destroy -auto-approve -var="bucket_prefix=${params.BUCKET_PREFIX}${ENV_NAME}-" -var="aws_region=${params.AWS_REGION}"'
             }
         }
     }
     
     post {
         always {
-            // Clean up the plan files after the job finishes
             sh 'rm -f tfplan tfplan.json'
         }
     }
