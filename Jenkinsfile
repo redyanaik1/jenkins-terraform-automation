@@ -17,16 +17,13 @@ pipeline {
             }
         }
 
-        stage('Terraform Init') {
-            steps {
-                sh 'terraform init -input=false -reconfigure -force-copy'
-            }
-        }
-
         stage('Deploy Infrastructure') {
             steps {
-                // We pass the Jenkins UI parameters directly into Terraform here!
-                sh "terraform apply -auto-approve -var='bucket_prefix=${params.BUCKET_PREFIX}' -var='aws_region=${params.AWS_REGION}'"
+                // Chaining init and apply inside a single shell block guarantees the backend initialization carries through
+                sh """
+                    terraform init -input=false -reconfigure
+                    terraform apply -auto-approve -var='bucket_prefix=${params.BUCKET_PREFIX}' -var='aws_region=${params.AWS_REGION}'
+                """
             }
         }
     }
